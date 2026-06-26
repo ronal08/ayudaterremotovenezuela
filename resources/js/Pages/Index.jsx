@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import MainLayout from '../Layouts/MainLayout';
 
-export default function Index({ people, externalPeople = [], stats, filters, flash }) {
+export default function Index({ people, externalPeople = [], stats, filters, flash, pagination }) {
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || '');
     const isFirstMount = useRef(true);
@@ -30,7 +30,7 @@ export default function Index({ people, externalPeople = [], stats, filters, fla
         const delayDebounceFn = setTimeout(() => {
             router.get(
                 '/',
-                { search, status },
+                { search, status, page: 1 },
                 { preserveState: true, replace: true }
             );
         }, 300);
@@ -42,9 +42,51 @@ export default function Index({ people, externalPeople = [], stats, filters, fla
         setStatus(newStatus);
         router.get(
             '/',
-            { search, status: newStatus },
+            { search, status: newStatus, page: 1 },
             { preserveState: true, replace: true }
         );
+    };
+
+    const handlePageChange = (newPage) => {
+        if (!pagination || newPage < 1 || newPage > pagination.totalPages) return;
+        router.get(
+            '/',
+            { search, status, page: newPage },
+            { preserveState: true }
+        );
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const getPageNumbers = () => {
+        if (!pagination) return [];
+        const current = pagination.currentPage;
+        const total = pagination.totalPages;
+        const pages = [];
+
+        if (total <= 7) {
+            for (let i = 1; i <= total; i++) {
+                pages.push(i);
+            }
+        } else {
+            pages.push(1);
+            if (current > 3) {
+                pages.push('...');
+            }
+
+            const start = Math.max(2, current - 1);
+            const end = Math.min(total - 1, current + 1);
+
+            for (let i = start; i <= end; i++) {
+                pages.push(i);
+            }
+
+            if (current < total - 2) {
+                pages.push('...');
+            }
+            pages.push(total);
+        }
+
+        return pages;
     };
 
     // Obtener iniciales de la persona
@@ -251,6 +293,77 @@ export default function Index({ people, externalPeople = [], stats, filters, fla
                     </div>
                 )}
             </div>
+
+            {/* Controles de Paginación */}
+            {pagination && pagination.totalPages > 1 && (
+                <div className="pagination-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '8rem', flexWrap: 'wrap' }}>
+                    <button
+                        onClick={() => handlePageChange(pagination.currentPage - 1)}
+                        disabled={pagination.currentPage === 1}
+                        className="pagination-btn"
+                        style={{
+                            padding: '8px 16px',
+                            borderRadius: '8px',
+                            border: '1px solid var(--border-color)',
+                            background: pagination.currentPage === 1 ? '#f1f5f9' : 'white',
+                            color: pagination.currentPage === 1 ? '#94a3b8' : 'var(--text-primary)',
+                            cursor: pagination.currentPage === 1 ? 'not-allowed' : 'pointer',
+                            fontWeight: '600',
+                            transition: 'var(--transition-normal)'
+                        }}
+                    >
+                        &larr; Anterior
+                    </button>
+
+                    {getPageNumbers().map((pageNum, idx) => {
+                        if (pageNum === '...') {
+                            return (
+                                <span key={`ellipsis-${idx}`} style={{ padding: '8px 12px', color: '#94a3b8' }}>
+                                    ...
+                                </span>
+                            );
+                        }
+
+                        return (
+                            <button
+                                key={`page-${pageNum}`}
+                                onClick={() => handlePageChange(pageNum)}
+                                className={`pagination-btn ${pagination.currentPage === pageNum ? 'active' : ''}`}
+                                style={{
+                                    padding: '8px 14px',
+                                    borderRadius: '8px',
+                                    border: '1px solid var(--border-color)',
+                                    background: pagination.currentPage === pageNum ? 'var(--ven-blue)' : 'white',
+                                    color: pagination.currentPage === pageNum ? 'white' : 'var(--text-primary)',
+                                    cursor: 'pointer',
+                                    fontWeight: '600',
+                                    transition: 'var(--transition-normal)'
+                                }}
+                            >
+                                {pageNum}
+                            </button>
+                        );
+                    })}
+
+                    <button
+                        onClick={() => handlePageChange(pagination.currentPage + 1)}
+                        disabled={pagination.currentPage === pagination.totalPages}
+                        className="pagination-btn"
+                        style={{
+                            padding: '8px 16px',
+                            borderRadius: '8px',
+                            border: '1px solid var(--border-color)',
+                            background: pagination.currentPage === pagination.totalPages ? '#f1f5f9' : 'white',
+                            color: pagination.currentPage === pagination.totalPages ? '#94a3b8' : 'var(--text-primary)',
+                            cursor: pagination.currentPage === pagination.totalPages ? 'not-allowed' : 'pointer',
+                            fontWeight: '600',
+                            transition: 'var(--transition-normal)'
+                        }}
+                    >
+                        Siguiente &rarr;
+                    </button>
+                </div>
+            )}
         </MainLayout>
     );
 }
