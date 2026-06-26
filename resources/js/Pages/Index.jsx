@@ -146,6 +146,27 @@ export default function Index({ people, externalPeople = [], stats, filters, fla
                                     <span className={`badge ${person.status === 'found' ? 'badge-found' : 'badge-missing'}`}>
                                         {person.status === 'found' ? 'Localizado' : 'Sin Contacto'}
                                     </span>
+
+                                    {/* Badge de Alianza */}
+                                    {person.is_external && (
+                                        <span style={{
+                                            position: 'absolute',
+                                            top: '1rem',
+                                            left: '1rem',
+                                            background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                                            color: 'white',
+                                            fontSize: '0.65rem',
+                                            fontWeight: '700',
+                                            padding: '4px 10px',
+                                            borderRadius: '999px',
+                                            boxShadow: 'var(--shadow-sm)',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.5px',
+                                            zIndex: 10
+                                        }}>
+                                            Alianza SOS
+                                        </span>
+                                    )}
                                 </div>
 
                                 {/* Contenido */}
@@ -204,13 +225,6 @@ export default function Index({ people, externalPeople = [], stats, filters, fla
                                         </div>
                                     )}
 
-                                    {person.is_external && (
-                                        <div style={{ marginTop: '0.75rem' }}>
-                                            <span className="badge" style={{ background: '#eff6ff', color: '#1e40af', fontSize: '0.65rem', fontWeight: '700', padding: '2px 8px', borderRadius: '4px' }}>
-                                                Alianza SOS
-                                            </span>
-                                        </div>
-                                    )}
                                 </div>
 
                                 {/* Footer de Tarjeta */}
