@@ -4,6 +4,29 @@ import MainLayout from '../Layouts/MainLayout';
 
 export default function Create() {
     const [photoPreview, setPhotoPreview] = useState(null);
+    const [duplicates, setDuplicates] = useState([]);
+
+    React.useEffect(() => {
+        if (!data.first_name || !data.last_name) {
+            setDuplicates([]);
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            fetch(`/api/check-duplicate?first_name=${encodeURIComponent(data.first_name)}&last_name=${encodeURIComponent(data.last_name)}`)
+                .then(res => res.json())
+                .then(resData => {
+                    if (resData.exists) {
+                        setDuplicates(resData.people);
+                    } else {
+                        setDuplicates([]);
+                    }
+                })
+                .catch(err => console.error(err));
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [data.first_name, data.last_name]);
 
     const { data, setData, post, processing, errors } = useForm({
         first_name: '',
@@ -87,6 +110,48 @@ export default function Create() {
                                         {errors.last_name && <span style={{ color: 'var(--danger-color)', fontSize: '0.75rem' }}>{errors.last_name}</span>}
                                     </div>
                                 </div>
+
+                                {duplicates.length > 0 && (
+                                    <div className="duplicate-warning-banner">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '700', color: 'var(--warning-color)' }}>
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                            </svg>
+                                            Posibles Reportes Duplicados Detectados
+                                        </div>
+                                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                                            Hemos encontrado personas con nombres similares registradas en el sistema. Por favor, verifica si es la persona que buscas antes de crear un nuevo reporte. Si es ella, puedes ingresar a su perfil para ver información o agregar una pista.
+                                        </p>
+                                        <div className="duplicate-matches-grid">
+                                            {duplicates.map(person => (
+                                                <div key={person.id} className="duplicate-match-card">
+                                                    <div>
+                                                        <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                                                            {person.first_name} {person.last_name}
+                                                        </strong>
+                                                        <span style={{ margin: '0 0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>|</span>
+                                                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                                            {person.age ? `${person.age} años` : 'Edad no especificada'}
+                                                        </span>
+                                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                                                            Visto en: {person.last_seen_location}
+                                                        </div>
+                                                    </div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                                        <span className={`badge ${person.status === 'found' ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: '0.65rem' }}>
+                                                            {person.status === 'found' ? 'Localizado' : 'Sin Contacto'}
+                                                        </span>
+                                                        <Link href={`/persona/${person.id}`} className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }} target="_blank">
+                                                            Ver Reporte
+                                                        </Link>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                                     <div className="form-group">

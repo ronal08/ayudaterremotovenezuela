@@ -55,6 +55,38 @@ class PersonController extends Controller
     }
 
     /**
+     * Check if a person with similar name already exists.
+     */
+    public function checkDuplicate(Request $request)
+    {
+        $firstName = $request->query('first_name');
+        $lastName = $request->query('last_name');
+
+        if (empty($firstName) || empty($lastName)) {
+            return response()->json(['exists' => false]);
+        }
+
+        // Buscar coincidencias similares (ignorando mayúsculas/minúsculas y buscando subcadenas)
+        $similarPeople = Person::where(function ($query) use ($firstName, $lastName) {
+            $query->where('first_name', 'like', "%{$firstName}%")
+                  ->where('last_name', 'like', "%{$lastName}%");
+        })->orWhere(function ($query) use ($firstName, $lastName) {
+            // Por si ingresan el apellido en el campo de nombre o viceversa
+            $query->where('first_name', 'like', "%{$lastName}%")
+                  ->where('last_name', 'like', "%{$firstName}%");
+        })->get(['id', 'first_name', 'last_name', 'age', 'last_seen_location', 'status']);
+
+        if ($similarPeople->isNotEmpty()) {
+            return response()->json([
+                'exists' => true,
+                'people' => $similarPeople
+            ]);
+        }
+
+        return response()->json(['exists' => false]);
+    }
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create()

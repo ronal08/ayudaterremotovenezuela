@@ -909,3 +909,171 @@ textarea.form-control {
     color: var(--text-muted);
     font-size: 0.875rem;
 }
+
+/* Navigation links */
+.nav-links {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    margin-right: 1.5rem;
+}
+
+.nav-link-item {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.5rem 0.25rem;
+    border-bottom: 2.5px solid transparent;
+    transition: var(--transition-fast);
+}
+
+.nav-link-item:hover {
+    color: var(--text-primary);
+}
+
+.nav-link-item.active {
+    color: var(--ven-blue);
+    border-bottom-color: var(--ven-blue);
+}
+
+/* Duplicate warning */
+.duplicate-warning-banner {
+    background-color: var(--warning-bg);
+    border: 1px solid #f59e0b;
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    animation: fadeIn 0.3s ease;
+}
+
+.duplicate-matches-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.duplicate-match-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: var(--transition-fast);
+}
+
+.duplicate-match-card:hover {
+    box-shadow: var(--shadow-sm);
+    border-color: #f59e0b;
+}
+
+/* Badges */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.badge-success {
+    background-color: var(--success-bg);
+    color: var(--success-color);
+}
+
+.badge-warning {
+    background-color: var(--warning-bg);
+    color: var(--warning-color);
+}
+
+.badge-danger {
+    background-color: var(--danger-bg);
+    color: var(--danger-color);
+}
+
+.badge-neutral {
+    background-color: #f1f5f9;
+    color: #475569;
+}
+
+.badge-blue {
+    background-color: #eff6ff;
+    color: #2563eb;
+}
+
+/* Grid Layouts */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 4rem;
+}
+
+.card-premium {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-normal);
+    display: flex;
+    flex-direction: column;
+}
+
+.card-premium:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-premium);
+}
+
+.card-header-flex {
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.card-body-content {
+    padding: 1.25rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.card-footer-actions {
+    padding: 1.25rem;
+    border-top: 1px solid var(--border-color);
+    background: #f8fafc;
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* Filter controls */
+.filters-bar-premium {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-md);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media(min-width: 768px) {
+    .filters-bar-premium {
+        grid-template-columns: 2fr 1fr 1fr;
+    }
+}
+

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Person;
 use App\Models\Comment;
+use App\Models\CollectionCenter;
+use App\Models\Volunteer;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -73,8 +75,13 @@ class AdminController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        $centers = CollectionCenter::orderBy('created_at', 'desc')->get();
+        $volunteers = Volunteer::orderBy('created_at', 'desc')->get();
+
         return Inertia::render('Admin/Dashboard', [
             'people' => $people,
+            'centers' => $centers,
+            'volunteers' => $volunteers,
             'flash' => [
                 'success' => session('success'),
                 'error' => session('error')
@@ -145,5 +152,62 @@ class AdminController extends Controller
         $comment->delete();
 
         return redirect()->back()->with('success', 'El comentario/pista fue eliminado.');
+    }
+
+    /**
+     * Toggle verification status of a collection center.
+     */
+    public function verifyCenter($id)
+    {
+        $center = CollectionCenter::findOrFail($id);
+        $center->update([
+            'is_verified' => !$center->is_verified
+        ]);
+
+        $status = $center->is_verified ? 'verificado y publicado' : 'desmarcado como verificado y ocultado';
+        return redirect()->back()->with('success', "El centro de acopio \"{$center->name}\" ha sido {$status}.");
+    }
+
+    /**
+     * Delete a collection center.
+     */
+    public function deleteCenter($id)
+    {
+        $center = CollectionCenter::findOrFail($id);
+
+        if ($center->photo_path) {
+            Storage::disk('public')->delete($center->photo_path);
+        }
+
+        $name = $center->name;
+        $center->delete();
+
+        return redirect()->back()->with('success', "El centro de acopio \"{$name}\" ha sido eliminado.");
+    }
+
+    /**
+     * Toggle verification status of a volunteer.
+     */
+    public function verifyVolunteer($id)
+    {
+        $volunteer = Volunteer::findOrFail($id);
+        $volunteer->update([
+            'is_verified' => !$volunteer->is_verified
+        ]);
+
+        $status = $volunteer->is_verified ? 'verificado y publicado' : 'desmarcado como verificado';
+        return redirect()->back()->with('success', "El voluntario {$volunteer->name} ha sido {$status}.");
+    }
+
+    /**
+     * Delete a volunteer.
+     */
+    public function deleteVolunteer($id)
+    {
+        $volunteer = Volunteer::findOrFail($id);
+        $name = $volunteer->name;
+        $volunteer->delete();
+
+        return redirect()->back()->with('success', "El voluntario {$name} ha sido eliminado.");
     }
 }

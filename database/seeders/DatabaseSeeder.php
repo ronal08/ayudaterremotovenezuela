@@ -91,5 +91,63 @@ class DatabaseSeeder extends Seeder
             'author_phone' => '0412-8889900',
             'content' => 'La señora Carmen se encuentra resguardada en el Ambulatorio de Salud Baruta. Está en perfectas condiciones físicas y ya está en contacto con sus familiares directos.',
         ]);
+
+        // 3. Crear Centros de Acopio de Prueba
+        \App\Models\CollectionCenter::create([
+            'name' => 'Cruz Roja Venezolana - Sede Caracas',
+            'address' => 'Av. Andrés Bello, Edificio Cruz Roja, La Candelaria, Caracas',
+            'state' => 'Distrito Capital',
+            'municipality' => 'Libertador',
+            'contact_name' => 'Dr. Luis Beltrán',
+            'contact_phone' => '0212-5751111',
+            'location_url' => 'https://maps.google.com/?q=Cruz+Roja+Venezolana+Caracas',
+            'photo_path' => null,
+            'needs' => 'Gasa, analgésicos, agua potable embotellada, alimentos no perecederos.',
+            'status' => 'Activo',
+            'is_verified' => true,
+            'security_pin' => \Illuminate\Support\Facades\Hash::make('4321'),
+        ]);
+
+        \App\Models\CollectionCenter::create([
+            'name' => 'Centro de Acopio Plaza Altamira',
+            'address' => 'Plaza Francia de Altamira, Puesto de Control de Protección Civil, Chacao',
+            'state' => 'Miranda',
+            'municipality' => 'Chacao',
+            'contact_name' => 'Comisionado Jorge Silva',
+            'contact_phone' => '0424-9993322',
+            'location_url' => 'https://maps.google.com/?q=Plaza+Francia+Altamira',
+            'photo_path' => null,
+            'needs' => 'Cobijas, colchonetas, linternas, baterías, pañales desechables.',
+            'status' => 'Lleno',
+            'is_verified' => true,
+            'security_pin' => \Illuminate\Support\Facades\Hash::make('1234'),
+        ]);
+
+        // 4. Crear Voluntarios de Prueba
+        \App\Models\Volunteer::create([
+            'name' => 'Pedro Castillo (Grupo Motorizado Miranda)',
+            'phone' => '0412-8883344',
+            'vehicle_type' => 'Motocicleta',
+            'vehicle_model' => 'KLR 650',
+            'state' => 'Miranda',
+            'municipality' => 'Chacao',
+            'notes' => 'Tengo moto alta cilindrada con maletero amplio para transportar medicinas y comida rápida en zonas de difícil acceso.',
+            'status' => 'Disponible',
+            'is_verified' => true,
+            'security_pin' => \Illuminate\Support\Facades\Hash::make('9999'),
+        ]);
+
+        \App\Models\Volunteer::create([
+            'name' => 'Marcos Díaz',
+            'phone' => '0416-5556677',
+            'vehicle_type' => 'Camioneta',
+            'vehicle_model' => 'Toyota Hilux 4x4',
+            'state' => 'Distrito Capital',
+            'municipality' => 'Libertador',
+            'notes' => 'Camioneta pick-up con caja abierta grande disponible para recoger donaciones pesadas (cajas de agua, bultos de comida).',
+            'status' => 'Disponible',
+            'is_verified' => true,
+            'security_pin' => \Illuminate\Support\Facades\Hash::make('8888'),
+        ]);
     }
 }

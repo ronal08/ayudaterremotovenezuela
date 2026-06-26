@@ -1,7 +1,8 @@
 import React from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 
 export default function MainLayout({ children, stats }) {
+    const { url } = usePage();
     return (
         <div>
             {/* Barra Tricolor Nacional */}
@@ -19,6 +20,17 @@ export default function MainLayout({ children, stats }) {
                         <span className="logo-badge">SOS</span>
                     </Link>
                     <nav className="header-nav">
+                        <div className="nav-links">
+                            <Link href="/" className={`nav-link-item ${url === '/' ? 'active' : ''}`}>
+                                Buscar Personas
+                            </Link>
+                            <Link href="/centros" className={`nav-link-item ${url.startsWith('/centros') ? 'active' : ''}`}>
+                                Centros de Acopio
+                            </Link>
+                            <Link href="/voluntarios" className={`nav-link-item ${url.startsWith('/voluntarios') ? 'active' : ''}`}>
+                                Voluntarios
+                            </Link>
+                        </div>
                         <Link href="/reportar" className="btn btn-primary">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>

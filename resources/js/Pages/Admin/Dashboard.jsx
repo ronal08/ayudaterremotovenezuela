@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 
-export default function Dashboard({ people, flash }) {
+export default function Dashboard({ people, centers = [], volunteers = [], flash }) {
+    const [activeTab, setActiveTab] = useState('people');
     const [editPerson, setEditPerson] = useState(null);
     const [viewCommentsPerson, setViewCommentsPerson] = useState(null);
 
-    // Formulario de edición
+    // Formulario de edición de personas
     const [editForm, setEditForm] = useState({
         first_name: '',
         last_name: '',
@@ -32,7 +33,7 @@ export default function Dashboard({ people, flash }) {
         router.post('/admin/logout');
     };
 
-    // Alternar verificación
+    // Alternar verificación de persona
     const handleVerifyToggle = (id) => {
         router.post(`/admin/persona/${id}/verificar`, {}, {
             preserveScroll: true
@@ -54,7 +55,6 @@ export default function Dashboard({ people, flash }) {
             router.delete(`/admin/comentario/${commentId}`, {
                 preserveScroll: true,
                 onSuccess: () => {
-                    // Actualizar el estado del modal localmente
                     if (viewCommentsPerson) {
                         const updatedComments = viewCommentsPerson.comments.filter(c => c.id !== commentId);
                         setViewCommentsPerson({
@@ -62,13 +62,44 @@ export default function Dashboard({ people, flash }) {
                             comments: updatedComments
                         });
                         
-                        // Sincronizar el conteo de comentarios en la lista principal de personas
                         const idx = people.findIndex(p => p.id === viewCommentsPerson.id);
                         if (idx !== -1) {
                             people[idx].comments = updatedComments;
                         }
                     }
                 }
+            });
+        }
+    };
+
+    // Alternar verificación de centro de acopio
+    const handleVerifyCenter = (id) => {
+        router.post(`/admin/centros/${id}/verificar`, {}, {
+            preserveScroll: true
+        });
+    };
+
+    // Eliminar centro de acopio
+    const handleDeleteCenter = (id, name) => {
+        if (confirm(`¿Estás seguro de que deseas eliminar el centro de acopio "${name}"?`)) {
+            router.delete(`/admin/centros/${id}`, {
+                preserveScroll: true
+            });
+        }
+    };
+
+    // Alternar verificación de voluntario
+    const handleVerifyVolunteer = (id) => {
+        router.post(`/admin/voluntarios/${id}/verificar`, {}, {
+            preserveScroll: true
+        });
+    };
+
+    // Eliminar voluntario
+    const handleDeleteVolunteer = (id, name) => {
+        if (confirm(`¿Estás seguro de que deseas eliminar al voluntario ${name}?`)) {
+            router.delete(`/admin/voluntarios/${id}`, {
+                preserveScroll: true
             });
         }
     };
@@ -132,127 +163,357 @@ export default function Dashboard({ people, flash }) {
             </header>
 
             {/* Contenido Principal */}
-            <div className="admin-container">
+            <div className="admin-container" style={{ maxWidth: '1200px', margin: '2rem auto', padding: '0 1rem' }}>
                 {/* Alertas */}
                 {flash && flash.success && (
-                    <div className="alert alert-success">{flash.success}</div>
+                    <div className="alert alert-success" style={{ marginBottom: '1.5rem' }}>{flash.success}</div>
                 )}
                 {flash && flash.error && (
-                    <div className="alert alert-danger">{flash.error}</div>
+                    <div className="alert alert-danger" style={{ marginBottom: '1.5rem' }}>{flash.error}</div>
                 )}
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: '800' }}>Registros de Personas</h2>
-                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                        Total en base de datos: <strong>{people.length} registros</strong>
-                    </span>
+                {/* Selectores de Pestaña */}
+                <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid #e2e8f0', marginBottom: '2rem' }}>
+                    <button
+                        onClick={() => setActiveTab('people')}
+                        className="btn"
+                        style={{
+                            padding: '0.75rem 1.5rem',
+                            borderBottomLeftRadius: 0,
+                            borderBottomRightRadius: 0,
+                            background: activeTab === 'people' ? 'var(--ven-blue)' : 'white',
+                            color: activeTab === 'people' ? 'white' : 'var(--text-secondary)',
+                            fontWeight: '700',
+                            border: '1px solid #e2e8f0',
+                            borderBottom: 'none'
+                        }}
+                    >
+                        Personas Desaparecidas ({people.length})
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('centers')}
+                        className="btn"
+                        style={{
+                            padding: '0.75rem 1.5rem',
+                            borderBottomLeftRadius: 0,
+                            borderBottomRightRadius: 0,
+                            background: activeTab === 'centers' ? 'var(--ven-blue)' : 'white',
+                            color: activeTab === 'centers' ? 'white' : 'var(--text-secondary)',
+                            fontWeight: '700',
+                            border: '1px solid #e2e8f0',
+                            borderBottom: 'none'
+                        }}
+                    >
+                        Centros de Acopio ({centers.length})
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('volunteers')}
+                        className="btn"
+                        style={{
+                            padding: '0.75rem 1.5rem',
+                            borderBottomLeftRadius: 0,
+                            borderBottomRightRadius: 0,
+                            background: activeTab === 'volunteers' ? 'var(--ven-blue)' : 'white',
+                            color: activeTab === 'volunteers' ? 'white' : 'var(--text-secondary)',
+                            fontWeight: '700',
+                            border: '1px solid #e2e8f0',
+                            borderBottom: 'none'
+                        }}
+                    >
+                        Voluntarios de Transporte ({volunteers.length})
+                    </button>
                 </div>
 
-                {/* Tabla de Personas */}
-                <div className="admin-table-card">
-                    <div className="admin-table-wrapper">
-                        <table className="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Nombre Completo</th>
-                                    <th>Último Contacto</th>
-                                    <th>Estado</th>
-                                    <th>Reportante</th>
-                                    <th>Verificado</th>
-                                    <th>Comentarios</th>
-                                    <th style={{ textAlign: 'right' }}>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {people.length > 0 ? (
-                                    people.map((person) => (
-                                        <tr key={person.id}>
-                                            <td><strong>#{person.id}</strong></td>
-                                            <td>
-                                                <div style={{ fontWeight: '700', color: 'var(--text-primary)' }}>
-                                                    {person.full_name}
-                                                </div>
-                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                                    {person.age ? `${person.age} años` : 'Edad no especificada'}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div style={{ fontWeight: '500' }}>{person.last_seen_location}</div>
-                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                                    {formatDate(person.last_seen_at)}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span className={`badge ${person.status === 'found' ? 'badge-found' : 'badge-missing'}`} style={{ position: 'static', padding: '2px 8px', fontSize: '0.7rem' }}>
-                                                    {person.status === 'found' ? 'Localizado' : 'Sin Contacto'}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div>{person.reporter_name} ({person.reporter_relationship})</div>
-                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                                    {person.reporter_phone}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <button
-                                                    onClick={() => handleVerifyToggle(person.id)}
-                                                    className="btn"
-                                                    style={{
-                                                        padding: '4px 8px',
-                                                        fontSize: '0.75rem',
-                                                        background: person.is_verified ? '#dcfce7' : '#f1f5f9',
-                                                        color: person.is_verified ? '#15803d' : '#475569',
-                                                        borderRadius: '4px',
-                                                        fontWeight: '700'
-                                                    }}
-                                                >
-                                                    {person.is_verified ? 'SÍ (Verificado)' : 'NO (Marcar)'}
-                                                </button>
-                                            </td>
-                                            <td>
-                                                <button
-                                                    onClick={() => setViewCommentsPerson(person)}
-                                                    className="btn btn-secondary"
-                                                    style={{ padding: '4px 8px', fontSize: '0.75rem', borderRadius: '4px' }}
-                                                >
-                                                    Pistas ({person.comments?.length || 0})
-                                                </button>
-                                            </td>
-                                            <td style={{ textAlign: 'right' }}>
-                                                <div className="admin-actions" style={{ justifyContent: 'flex-end' }}>
-                                                    <button
-                                                        onClick={() => openEditModal(person)}
-                                                        className="btn btn-secondary"
-                                                        style={{ padding: '6px 10px', fontSize: '0.75rem', borderRadius: '4px' }}
-                                                    >
-                                                        Editar
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeletePerson(person.id, person.full_name)}
-                                                        className="btn btn-danger"
-                                                        style={{ padding: '6px 10px', fontSize: '0.75rem', borderRadius: '4px' }}
-                                                    >
-                                                        Borrar
-                                                    </button>
-                                                </div>
-                                            </td>
+                {/* RENDER SEGÚN PESTAÑA */}
+                {activeTab === 'people' && (
+                    <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h2 style={{ fontSize: '1.5rem', fontWeight: '800' }}>Registros de Personas</h2>
+                            <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                                Total en base de datos: <strong>{people.length} registros</strong>
+                            </span>
+                        </div>
+
+                        <div className="admin-table-card">
+                            <div className="admin-table-wrapper">
+                                <table className="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nombre Completo</th>
+                                            <th>Último Contacto</th>
+                                            <th>Estado</th>
+                                            <th>Reportante</th>
+                                            <th>Verificado</th>
+                                            <th>Comentarios</th>
+                                            <th style={{ textAlign: 'right' }}>Acciones</th>
                                         </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}>
-                                            No hay registros en la base de datos actualmente.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                                    </thead>
+                                    <tbody>
+                                        {people.length > 0 ? (
+                                            people.map((person) => (
+                                                <tr key={person.id}>
+                                                    <td><strong>#{person.id}</strong></td>
+                                                    <td>
+                                                        <div style={{ fontWeight: '700', color: 'var(--text-primary)' }}>
+                                                            {person.full_name}
+                                                        </div>
+                                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                            {person.age ? `${person.age} años` : 'Edad no especificada'}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div style={{ fontWeight: '500' }}>{person.last_seen_location}</div>
+                                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                            {formatDate(person.last_seen_at)}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span className={`badge ${person.status === 'found' ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: '0.7rem' }}>
+                                                            {person.status === 'found' ? 'Localizado' : 'Sin Contacto'}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div>{person.reporter_name} ({person.reporter_relationship})</div>
+                                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                            {person.reporter_phone}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <button
+                                                            onClick={() => handleVerifyToggle(person.id)}
+                                                            className="btn"
+                                                            style={{
+                                                                padding: '4px 8px',
+                                                                fontSize: '0.75rem',
+                                                                background: person.is_verified ? '#dcfce7' : '#f1f5f9',
+                                                                color: person.is_verified ? '#15803d' : '#475569',
+                                                                borderRadius: '4px',
+                                                                fontWeight: '700'
+                                                            }}
+                                                        >
+                                                            {person.is_verified ? 'SÍ (Verificado)' : 'NO (Marcar)'}
+                                                        </button>
+                                                    </td>
+                                                    <td>
+                                                        <button
+                                                            onClick={() => setViewCommentsPerson(person)}
+                                                            className="btn btn-secondary"
+                                                            style={{ padding: '4px 8px', fontSize: '0.75rem', borderRadius: '4px' }}
+                                                        >
+                                                            Pistas ({person.comments?.length || 0})
+                                                        </button>
+                                                    </td>
+                                                    <td style={{ textAlign: 'right' }}>
+                                                        <div className="admin-actions" style={{ justifyContent: 'flex-end' }}>
+                                                            <button
+                                                                onClick={() => openEditModal(person)}
+                                                                className="btn btn-secondary"
+                                                                style={{ padding: '6px 10px', fontSize: '0.75rem', borderRadius: '4px' }}
+                                                            >
+                                                                Editar
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeletePerson(person.id, person.full_name)}
+                                                                className="btn btn-danger"
+                                                                style={{ padding: '6px 10px', fontSize: '0.75rem', borderRadius: '4px' }}
+                                                            >
+                                                                Borrar
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}>
+                                                    No hay personas registradas.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                )}
+
+                {activeTab === 'centers' && (
+                    <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h2 style={{ fontSize: '1.5rem', fontWeight: '800' }}>Registros de Centros de Acopio</h2>
+                            <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                                Total registrados: <strong>{centers.length} centros</strong>
+                            </span>
+                        </div>
+
+                        <div className="admin-table-card">
+                            <div className="admin-table-wrapper">
+                                <table className="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nombre del Centro</th>
+                                            <th>Ubicación</th>
+                                            <th>Insumos Necesitados</th>
+                                            <th>Contacto</th>
+                                            <th>Estado</th>
+                                            <th>Habilitado / Verificado</th>
+                                            <th style={{ textAlign: 'right' }}>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {centers.length > 0 ? (
+                                            centers.map((center) => (
+                                                <tr key={center.id}>
+                                                    <td><strong>#{center.id}</strong></td>
+                                                    <td style={{ fontWeight: '700' }}>{center.name}</td>
+                                                    <td>
+                                                        <div>{center.address}</div>
+                                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                            {center.state} · {center.municipality}
+                                                        </span>
+                                                    </td>
+                                                    <td style={{ fontSize: '0.85rem', fontStyle: 'italic', maxWidth: '250px' }}>
+                                                        {center.needs || 'No especificados'}
+                                                    </td>
+                                                    <td>
+                                                        <div>{center.contact_name}</div>
+                                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{center.contact_phone}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span className={`badge ${center.status === 'Activo' ? 'badge-success' : 'badge-warning'}`}>
+                                                            {center.status}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <button
+                                                            onClick={() => handleVerifyCenter(center.id)}
+                                                            className="btn"
+                                                            style={{
+                                                                padding: '4px 8px',
+                                                                fontSize: '0.75rem',
+                                                                background: center.is_verified ? '#dcfce7' : '#fee2e2',
+                                                                color: center.is_verified ? '#15803d' : '#991b1b',
+                                                                borderRadius: '4px',
+                                                                fontWeight: '700'
+                                                            }}
+                                                        >
+                                                            {center.is_verified ? 'SÍ (Público)' : 'NO (Oculto - Aprobar)'}
+                                                        </button>
+                                                    </td>
+                                                    <td style={{ textAlign: 'right' }}>
+                                                        <button
+                                                            onClick={() => handleDeleteCenter(center.id, center.name)}
+                                                            className="btn btn-danger"
+                                                            style={{ padding: '6px 10px', fontSize: '0.75rem', borderRadius: '4px' }}
+                                                        >
+                                                            Eliminar
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}>
+                                                    No hay centros de acopio registrados.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'volunteers' && (
+                    <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h2 style={{ fontSize: '1.5rem', fontWeight: '800' }}>Registros de Voluntarios de Transporte</h2>
+                            <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                                Total voluntarios: <strong>{volunteers.length} registrados</strong>
+                            </span>
+                        </div>
+
+                        <div className="admin-table-card">
+                            <div className="admin-table-wrapper">
+                                <table className="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nombre Completo</th>
+                                            <th>Vehículo</th>
+                                            <th>Zona de Cobertura</th>
+                                            <th>Teléfono</th>
+                                            <th>Estado</th>
+                                            <th>Contacto Verificado</th>
+                                            <th style={{ textAlign: 'right' }}>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {volunteers.length > 0 ? (
+                                            volunteers.map((vol) => (
+                                                <tr key={vol.id}>
+                                                    <td><strong>#{vol.id}</strong></td>
+                                                    <td style={{ fontWeight: '700' }}>{vol.name}</td>
+                                                    <td>
+                                                        <div>{vol.vehicle_type}</div>
+                                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{vol.vehicle_model || 'Sin especificar'}</span>
+                                                    </td>
+                                                    <td>
+                                                        <div>{vol.municipality}</div>
+                                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{vol.state}</span>
+                                                    </td>
+                                                    <td><a href={`tel:${vol.phone}`}>{vol.phone}</a></td>
+                                                    <td>
+                                                        <span className={`badge ${vol.status === 'Disponible' ? 'badge-success' : vol.status === 'En misión' ? 'badge-blue' : 'badge-neutral'}`}>
+                                                            {vol.status}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <button
+                                                            onClick={() => handleVerifyVolunteer(vol.id)}
+                                                            className="btn"
+                                                            style={{
+                                                                padding: '4px 8px',
+                                                                fontSize: '0.75rem',
+                                                                background: vol.is_verified ? '#dcfce7' : '#fee2e2',
+                                                                color: vol.is_verified ? '#15803d' : '#991b1b',
+                                                                borderRadius: '4px',
+                                                                fontWeight: '700'
+                                                            }}
+                                                        >
+                                                            {vol.is_verified ? 'SÍ (Público)' : 'NO (Aprobar)'}
+                                                        </button>
+                                                    </td>
+                                                    <td style={{ textAlign: 'right' }}>
+                                                        <button
+                                                            onClick={() => handleDeleteVolunteer(vol.id, vol.name)}
+                                                            className="btn btn-danger"
+                                                            style={{ padding: '6px 10px', fontSize: '0.75rem', borderRadius: '4px' }}
+                                                        >
+                                                            Eliminar
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}>
+                                                    No hay voluntarios registrados.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {/* MODAL DE EDICIÓN */}
+            {/* MODAL DE EDICIÓN DE PERSONAS */}
             {editPerson && (
                 <div className="modal-overlay">
                     <div className="modal-content" style={{ maxWidth: '600px' }}>
