@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import MainLayout from '../Layouts/MainLayout';
 
-export default function Index({ people, stats, filters, flash }) {
+export default function Index({ people, externalPeople = [], stats, filters, flash }) {
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || '');
     const isFirstMount = useRef(true);
@@ -200,6 +200,112 @@ export default function Index({ people, stats, filters, flash }) {
                     </div>
                 )}
             </div>
+
+            {/* Reportes de la Alianza Aliada */}
+            {externalPeople.length > 0 && (
+                <div style={{ maxWidth: '1200px', margin: '3rem auto 0 auto', padding: '0 1rem' }}>
+                    <div style={{ borderTop: '2px solid var(--border-color)', paddingTop: '2rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <div>
+                            <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                                Reportes en Plataformas Aliadas
+                            </h3>
+                            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                                Coincidencias encontradas en la red solidaria de desaparecidosterremotovenezuela.com
+                            </p>
+                        </div>
+                        <span className="badge badge-blue" style={{ padding: '4px 10px', fontSize: '0.75rem' }}>
+                            Alianza SOS Activa
+                        </span>
+                    </div>
+
+                    <div className="people-grid" style={{ marginBottom: '4rem' }}>
+                        {externalPeople.map((person) => (
+                            <a
+                                key={person.id}
+                                href={person.source_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="person-card"
+                                style={{ textDecoration: 'none' }}
+                            >
+                                {/* Imagen o Iniciales */}
+                                <div className="card-image-wrapper">
+                                    {person.photo_url ? (
+                                        <img
+                                            src={person.photo_url}
+                                            alt={person.full_name}
+                                            className="card-image"
+                                        />
+                                    ) : (
+                                        <div className="placeholder-avatar" style={{ background: '#eff6ff', color: '#1e40af' }}>
+                                            <div className="placeholder-avatar-initials">
+                                                {person.full_name.charAt(0).toUpperCase()}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Badge de Estado */}
+                                    <span className={`badge ${person.status === 'found' ? 'badge-found' : 'badge-missing'}`}>
+                                        {person.status === 'found' ? 'Localizado' : 'Sin Contacto'}
+                                    </span>
+                                </div>
+
+                                {/* Contenido */}
+                                <div className="card-content">
+                                    <h3 className="card-name" style={{ color: 'var(--text-primary)' }}>
+                                        {person.full_name}
+                                    </h3>
+
+                                    <div className="card-meta-item">
+                                        <span>Edad:</span>
+                                        <strong>{person.age ? `${person.age} años` : 'No especificada'}</strong>
+                                    </div>
+
+                                    <div className="card-meta-item" style={{ marginTop: '0.25rem' }}>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '2px', color: '#64748b' }}>
+                                            <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"></path>
+                                            <circle cx="12" cy="10" r="3"></circle>
+                                        </svg>
+                                        <span>Último contacto en:</span>
+                                        <strong style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '170px' }}>
+                                            {person.last_seen_location}
+                                        </strong>
+                                    </div>
+
+                                    {person.last_seen_at && (
+                                        <div className="card-meta-item">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '2px', color: '#64748b' }}>
+                                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                                            </svg>
+                                            <span>Fecha de reporte:</span>
+                                            <strong>{person.last_seen_at}</strong>
+                                        </div>
+                                    )}
+
+                                    {person.distinctive_features && (
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem', background: '#f8fafc', padding: '0.5rem', borderRadius: '4px', borderLeft: '2.5px solid #2563eb' }}>
+                                            <p style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', margin: 0 }}>
+                                                {person.distinctive_features}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Footer de Tarjeta */}
+                                <div className="card-footer" style={{ borderTop: '1px solid #e2e8f0', background: '#eff6ff' }}>
+                                    <span className="card-link" style={{ color: '#1e40af', fontWeight: '700' }}>Ver en web aliada &rarr;</span>
+                                    <span style={{ fontSize: '0.75rem', color: '#1e40af', fontWeight: '500' }}>
+                                        Fuente: desaparecidosterremotovenezuela.com
+                                    </span>
+                                </div>
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            )}
         </MainLayout>
     );
 }

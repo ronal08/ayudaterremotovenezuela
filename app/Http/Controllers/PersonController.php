@@ -17,6 +17,7 @@ class PersonController extends Controller
     public function index(Request $request)
     {
         $query = Person::query();
+        $externalPeople = [];
 
         // Aplicar filtros de búsqueda
         if ($request->filled('search')) {
@@ -27,16 +28,62 @@ class PersonController extends Controller
                   ->orWhere('last_seen_location', 'like', "%{$search}%")
                   ->orWhere('distinctive_features', 'like', "%{$search}%");
             });
+
+            // Consulta a la API externa aliada
+            try {
+                $response = \Illuminate\Support\Facades\Http::timeout(6)->get('https://desaparecidos-terremoto-api.theempire.tech/api/personas', [
+                    'q' => $search,
+                    'pageSize' => 50
+                ]);
+
+                if ($response->successful()) {
+                    $externalData = $response->json();
+                    if (isset($externalData['personas']) && is_array($externalData['personas'])) {
+                        foreach ($externalData['personas'] as $item) {
+                            $nombre = $item['nombre'] ?? '';
+
+                            // Filtro de spam básico para omitir registros falsos de la API
+                            $isSpam = false;
+                            $spamKeywords = ['trusted', 'http', 'oracle', 'hotel', 'test-logo', 'infinityhotel', 'www.', '.com', '.it'];
+                            foreach ($spamKeywords as $keyword) {
+                                if (stripos($nombre, $keyword) !== false) {
+                                    $isSpam = true;
+                                    break;
+                                }
+                            }
+
+                            if (!$isSpam && !empty($nombre)) {
+                                $externalPeople[] = [
+                                    'id' => $item['id'] ?? uniqid(),
+                                    'full_name' => $nombre,
+                                    'age' => $item['edad'] ?? null,
+                                    'last_seen_location' => $item['ubicacion'] ?? 'No especificada',
+                                    'last_seen_at' => $item['fecha'] ?? null,
+                                    'distinctive_features' => $item['descripcion'] ?? null,
+                                    'photo_url' => $item['foto'] ?? null,
+                                    'status' => ($item['estado'] ?? '') === 'localizado' ? 'found' : 'missing',
+                                    'contact' => $item['contacto'] ?? null,
+                                    'is_external' => true,
+                                    'source_url' => 'https://desaparecidosterremotovenezuela.com'
+                                ];
+                            }
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Loguear error de forma silenciosa para que la app principal no falle si la API externa está inactiva
+                \Illuminate\Support\Facades\Log::error('Error consultando API externa: ' . $e->getMessage());
+            }
         }
 
-        // Filtro de estado ('missing' o 'found')
+        // Filtro de estado ('missing' o 'found') local
         if ($request->filled('status') && in_array($request->input('status'), ['missing', 'found'])) {
             $query->where('status', $request->input('status'));
         }
 
         $people = $query->orderBy('created_at', 'desc')->get();
 
-        // Estadísticas en tiempo real
+        // Estadísticas en tiempo real locales
         $stats = [
             'total' => Person::count(),
             'missing' => Person::where('status', 'missing')->count(),
@@ -45,6 +92,7 @@ class PersonController extends Controller
 
         return Inertia::render('Index', [
             'people' => $people,
+            'externalPeople' => $externalPeople,
             'stats' => $stats,
             'filters' => $request->only(['search', 'status']),
             'flash' => [
