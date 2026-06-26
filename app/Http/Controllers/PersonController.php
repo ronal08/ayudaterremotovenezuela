@@ -20,16 +20,25 @@ class PersonController extends Controller
         $externalPeople = [];
         $externalStats = ['total' => 0, 'missing' => 0, 'found' => 0];
 
+        $page = intval($request->input('page', 1));
+        if ($page < 1) {
+            $page = 1;
+        }
+
+        $pageSize = 16;
+
         // Determinar parámetros de consulta para la API externa
         $search = $request->input('search');
-        $apiParams = [];
+        $apiParams = ['page' => $page];
         if ($request->filled('search')) {
             $apiParams['q'] = $search;
-            $apiParams['pageSize'] = 50;
+            // Para compensar registros de spam que filtramos, solicitamos 24 items y luego recortamos a 16
+            $apiParams['pageSize'] = 24;
         } else {
-            $apiParams['page'] = 1;
-            $apiParams['pageSize'] = 30; // Traer los últimos 30 reportes si no hay búsqueda activa
+            $apiParams['pageSize'] = 20; // Traer 20 reportes si no hay búsqueda activa (y luego recortamos a 16)
         }
+
+        $externalTotal = 0;
 
         // Consulta a la API externa aliada
         try {
@@ -44,6 +53,8 @@ class PersonController extends Controller
                     $externalStats['missing'] = intval($externalData['counts']['sinContacto'] ?? 0);
                     $externalStats['found'] = intval($externalData['counts']['localizado'] ?? 0);
                 }
+
+                $externalTotal = intval($externalData['total'] ?? 0);
 
                 $items = $externalData['items'] ?? $externalData['personas'] ?? [];
                 if (is_array($items)) {
@@ -86,6 +97,9 @@ class PersonController extends Controller
                         }
                     }
                 }
+                
+                // Recortar a pageSize (16)
+                $externalPeople = array_slice($externalPeople, 0, $pageSize);
             }
         } catch (\Exception $e) {
             // Loguear error de forma silenciosa para que la app principal no falle si la API externa está inactiva
@@ -107,7 +121,8 @@ class PersonController extends Controller
             $query->where('status', $request->input('status'));
         }
 
-        $people = $query->orderBy('created_at', 'desc')->get();
+        $localTotal = $query->count();
+        $people = $query->orderBy('created_at', 'desc')->skip(($page - 1) * $pageSize)->take($pageSize)->get();
 
         // Estadísticas unificadas (Locales + Externas)
         $stats = [
@@ -116,11 +131,25 @@ class PersonController extends Controller
             'found' => Person::where('status', 'found')->count() + $externalStats['found'],
         ];
 
+        // Calcular total de páginas
+        $totalLocalPages = ceil($localTotal / $pageSize);
+        $totalExternalPages = ceil($externalTotal / $pageSize);
+        $totalPages = max($totalLocalPages, $totalExternalPages);
+        if ($totalPages < 1) {
+            $totalPages = 1;
+        }
+
         return Inertia::render('Index', [
             'people' => $people,
             'externalPeople' => $externalPeople,
             'stats' => $stats,
-            'filters' => $request->only(['search', 'status']),
+            'filters' => $request->only(['search', 'status', 'page']),
+            'pagination' => [
+                'currentPage' => $page,
+                'totalPages' => $totalPages,
+                'localTotal' => $localTotal,
+                'externalTotal' => $externalTotal
+            ],
             'flash' => [
                 'success' => session('success'),
                 'error' => session('error')
