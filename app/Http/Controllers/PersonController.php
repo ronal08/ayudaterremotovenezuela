@@ -28,14 +28,12 @@ class PersonController extends Controller
         $pageSize = 16;
 
         // Determinar parámetros de consulta para la API externa
+        // NOTA: La API aliada tiene un alto volumen de spam (~75% de los registros recientes).
+        // Solicitamos 100 items y luego filtramos spam, recortando a 16 resultados limpios por página.
         $search = $request->input('search');
-        $apiParams = ['page' => $page];
+        $apiParams = ['page' => $page, 'pageSize' => 100];
         if ($request->filled('search')) {
             $apiParams['q'] = $search;
-            // Para compensar registros de spam que filtramos, solicitamos 24 items y luego recortamos a 16
-            $apiParams['pageSize'] = 24;
-        } else {
-            $apiParams['pageSize'] = 20; // Traer 20 reportes si no hay búsqueda activa (y luego recortamos a 16)
         }
 
         $externalTotal = 0;
