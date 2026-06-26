@@ -38,8 +38,9 @@ class PersonController extends Controller
 
                 if ($response->successful()) {
                     $externalData = $response->json();
-                    if (isset($externalData['personas']) && is_array($externalData['personas'])) {
-                        foreach ($externalData['personas'] as $item) {
+                    $items = $externalData['items'] ?? $externalData['personas'] ?? [];
+                    if (is_array($items)) {
+                        foreach ($items as $item) {
                             $nombre = $item['nombre'] ?? '';
 
                             // Filtro de spam básico para omitir registros falsos de la API
