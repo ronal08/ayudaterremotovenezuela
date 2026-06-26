@@ -52,6 +52,11 @@ export default function Index({ people, externalPeople = [], stats, filters, fla
         return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
     };
 
+    const combinedPeople = [
+        ...people.map(p => ({ ...p, is_external: false })),
+        ...externalPeople
+    ];
+
     return (
         <MainLayout stats={stats}>
             <Head title="Directorio de Búsqueda" />
@@ -103,128 +108,19 @@ export default function Index({ people, externalPeople = [], stats, filters, fla
                 </div>
             </div>
 
-            {/* Rejilla de Reportes */}
-            <div className="people-grid">
-                {people.length > 0 ? (
-                    people.map((person) => (
-                        <Link
-                            key={person.id}
-                            href={`/persona/${person.id}`}
-                            className="person-card"
-                        >
-                            {/* Imagen o Iniciales */}
-                            <div className="card-image-wrapper">
-                                {person.photo_url ? (
-                                    <img
-                                        src={person.photo_url}
-                                        alt={person.full_name}
-                                        className="card-image"
-                                    />
-                                ) : (
-                                    <div className="placeholder-avatar">
-                                        <div className="placeholder-avatar-initials">
-                                            {getInitials(person.first_name, person.last_name)}
-                                        </div>
-                                    </div>
-                                )}
+            {/* Rejilla de Reportes Combinada */}
+            <div className="people-grid" style={{ marginBottom: '6rem' }}>
+                {combinedPeople.length > 0 ? (
+                    combinedPeople.map((person) => {
+                        const CardTag = person.is_external ? 'a' : Link;
+                        const cardProps = person.is_external
+                            ? { href: person.source_url, target: '_blank', rel: 'noopener noreferrer' }
+                            : { href: `/persona/${person.id}` };
 
-                                {/* Badge de Estado */}
-                                <span className={`badge ${person.status === 'found' ? 'badge-found' : 'badge-missing'}`}>
-                                    {person.status === 'found' ? 'Localizado' : 'Sin Contacto'}
-                                </span>
-                            </div>
-
-                            {/* Contenido */}
-                            <div className="card-content">
-                                <h3 className="card-name">
-                                    {person.full_name}
-                                </h3>
-
-                                <div className="card-meta-item">
-                                    <span>Edad:</span>
-                                    <strong>{person.age ? `${person.age} años` : 'No especificada'}</strong>
-                                </div>
-
-                                <div className="card-meta-item" style={{ marginTop: '0.25rem' }}>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '2px', color: '#64748b' }}>
-                                        <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"></path>
-                                        <circle cx="12" cy="10" r="3"></circle>
-                                    </svg>
-                                    <span>Último contacto en:</span>
-                                    <strong style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '170px' }}>
-                                        {person.last_seen_location}
-                                    </strong>
-                                </div>
-
-                                <div className="card-meta-item">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '2px', color: '#64748b' }}>
-                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                                    </svg>
-                                    <span>Fecha:</span>
-                                    <strong>{formatDate(person.last_seen_at)}</strong>
-                                </div>
-
-                                {person.is_verified && (
-                                    <div style={{ marginTop: '0.75rem' }}>
-                                        <span className="badge-verified">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '2px' }}>
-                                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path>
-                                            </svg>
-                                            Verificado por autoridades
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Footer de Tarjeta */}
-                            <div className="card-footer">
-                                <span className="card-link">Ver detalles</span>
-                                <span className="comment-count-badge">
-                                    {person.comments?.length || 0} pistas
-                                </span>
-                            </div>
-                        </Link>
-                    ))
-                ) : (
-                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem 1rem', background: 'white', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '1rem' }}>
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                            <line x1="8" y1="11" x2="14" y2="11"></line>
-                        </svg>
-                        <h4 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.5rem' }}>No se encontraron reportes</h4>
-                        <p style={{ color: 'var(--text-secondary)' }}>Intenta ajustar los términos de búsqueda o los filtros de estado.</p>
-                    </div>
-                )}
-            </div>
-
-            {/* Reportes de la Alianza Aliada */}
-            {externalPeople.length > 0 && (
-                <div style={{ maxWidth: '1200px', margin: '3rem auto 0 auto', padding: '0 1rem' }}>
-                    <div style={{ borderTop: '2px solid var(--border-color)', paddingTop: '2rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        <div>
-                            <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-                                Reportes en Plataformas Aliadas
-                            </h3>
-                            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                                Coincidencias encontradas en la red solidaria de desaparecidosterremotovenezuela.com
-                            </p>
-                        </div>
-                        <span className="badge badge-blue" style={{ padding: '4px 10px', fontSize: '0.75rem' }}>
-                            Alianza SOS Activa
-                        </span>
-                    </div>
-
-                    <div className="people-grid" style={{ marginBottom: '4rem' }}>
-                        {externalPeople.map((person) => (
-                            <a
+                        return (
+                            <CardTag
                                 key={person.id}
-                                href={person.source_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                {...cardProps}
                                 className="person-card"
                                 style={{ textDecoration: 'none' }}
                             >
@@ -237,9 +133,11 @@ export default function Index({ people, externalPeople = [], stats, filters, fla
                                             className="card-image"
                                         />
                                     ) : (
-                                        <div className="placeholder-avatar" style={{ background: '#eff6ff', color: '#1e40af' }}>
+                                        <div className="placeholder-avatar" style={person.is_external ? { background: '#eff6ff', color: '#1e40af' } : null}>
                                             <div className="placeholder-avatar-initials">
-                                                {person.full_name.charAt(0).toUpperCase()}
+                                                {person.is_external 
+                                                    ? person.full_name.charAt(0).toUpperCase()
+                                                    : getInitials(person.first_name, person.last_name)}
                                             </div>
                                         </div>
                                     )}
@@ -272,40 +170,73 @@ export default function Index({ people, externalPeople = [], stats, filters, fla
                                         </strong>
                                     </div>
 
-                                    {person.last_seen_at && (
-                                        <div className="card-meta-item">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '2px', color: '#64748b' }}>
-                                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                                <line x1="16" y1="2" x2="16" y2="6"></line>
-                                                <line x1="8" y1="2" x2="8" y2="6"></line>
-                                                <line x1="3" y1="10" x2="21" y2="10"></line>
-                                            </svg>
-                                            <span>Fecha de reporte:</span>
-                                            <strong>{person.last_seen_at}</strong>
-                                        </div>
-                                    )}
+                                    <div className="card-meta-item">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '2px', color: '#64748b' }}>
+                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                                        </svg>
+                                        <span>Fecha:</span>
+                                        <strong>
+                                            {person.is_external 
+                                                ? person.last_seen_at 
+                                                : formatDate(person.last_seen_at)}
+                                        </strong>
+                                    </div>
 
-                                    {person.distinctive_features && (
+                                    {person.is_external && person.distinctive_features && (
                                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem', background: '#f8fafc', padding: '0.5rem', borderRadius: '4px', borderLeft: '2.5px solid #2563eb' }}>
                                             <p style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', margin: 0 }}>
                                                 {person.distinctive_features}
                                             </p>
                                         </div>
                                     )}
+
+                                    {!person.is_external && person.is_verified && (
+                                        <div style={{ marginTop: '0.75rem' }}>
+                                            <span className="badge-verified">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '2px' }}>
+                                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path>
+                                                </svg>
+                                                Verificado por autoridades
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {person.is_external && (
+                                        <div style={{ marginTop: '0.75rem' }}>
+                                            <span className="badge" style={{ background: '#eff6ff', color: '#1e40af', fontSize: '0.65rem', fontWeight: '700', padding: '2px 8px', borderRadius: '4px' }}>
+                                                Alianza SOS
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Footer de Tarjeta */}
-                                <div className="card-footer" style={{ borderTop: '1px solid #e2e8f0', background: '#eff6ff' }}>
-                                    <span className="card-link" style={{ color: '#1e40af', fontWeight: '700' }}>Ver en web aliada &rarr;</span>
-                                    <span style={{ fontSize: '0.75rem', color: '#1e40af', fontWeight: '500' }}>
-                                        Fuente: desaparecidosterremotovenezuela.com
+                                <div className="card-footer" style={person.is_external ? { borderTop: '1px solid #e2e8f0', background: '#eff6ff' } : null}>
+                                    <span className="card-link" style={person.is_external ? { color: '#1e40af', fontWeight: '700' } : null}>
+                                        {person.is_external ? 'Ver en web aliada' : 'Ver detalles'}
+                                    </span>
+                                    <span className={person.is_external ? '' : 'comment-count-badge'} style={person.is_external ? { fontSize: '0.7rem', color: '#1e40af', fontWeight: '500' } : null}>
+                                        {person.is_external ? 'desaparecidosterremotovenezuela.com' : `${person.comments?.length || 0} pistas`}
                                     </span>
                                 </div>
-                            </a>
-                        ))}
+                            </CardTag>
+                        );
+                    })
+                ) : (
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem 1rem', background: 'white', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '1rem' }}>
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                        </svg>
+                        <h4 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.5rem' }}>No se encontraron reportes</h4>
+                        <p style={{ color: 'var(--text-secondary)' }}>Intenta ajustar los términos de búsqueda o los filtros de estado.</p>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </MainLayout>
     );
 }

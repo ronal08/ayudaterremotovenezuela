@@ -53,15 +53,24 @@ class PersonController extends Controller
                             }
 
                             if (!$isSpam && !empty($nombre)) {
+                                $mappedStatus = ($item['estado'] ?? '') === 'localizado' ? 'found' : 'missing';
+
+                                // Filtrar por estado si el filtro está activo
+                                if ($request->filled('status') && in_array($request->input('status'), ['missing', 'found'])) {
+                                    if ($request->input('status') !== $mappedStatus) {
+                                        continue;
+                                    }
+                                }
+
                                 $externalPeople[] = [
                                     'id' => $item['id'] ?? uniqid(),
                                     'full_name' => $nombre,
                                     'age' => $item['edad'] ?? null,
                                     'last_seen_location' => $item['ubicacion'] ?? 'No especificada',
                                     'last_seen_at' => $item['fecha'] ?? null,
-                                    'distinctive_features' => $item['descripcion'] ?? null,
+                                    'distinctive_features' => $item['distinctive_features'] ?? ($item['descripcion'] ?? null),
                                     'photo_url' => $item['foto'] ?? null,
-                                    'status' => ($item['estado'] ?? '') === 'localizado' ? 'found' : 'missing',
+                                    'status' => $mappedStatus,
                                     'contact' => $item['contacto'] ?? null,
                                     'is_external' => true,
                                     'source_url' => 'https://desaparecidosterremotovenezuela.com'
